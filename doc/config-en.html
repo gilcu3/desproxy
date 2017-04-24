@@ -1,0 +1,258 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>desproxy Readme</title>
+</head>
+  <body>
+         
+<h1>desproxy Readme</h1>
+         
+<div align="justify">    
+<div align="center"><b>desproxy</b> - a TCP tunnel for HTTP proxies<br>
+    <br>
+    (c) 2001 Miguelanxo Otero Salgueiro<br>
+ <a href="http://desproxy.sourceforge.net">desproxy.sourceforge.net</a><br>
+    </div>
+       
+<table cellpadding="2" cellspacing="2" border="0" width="100%">
+      <tbody>
+        <tr>
+          <td valign="top" width="10%"><br>
+          </td>
+          <td valign="top" width="80%"><br>
+                        
+      <div align="justify"><b>desproxy</b> is just an answer to a question
+ I have been wondering,  for about a year: &iquest;Is there any way to make
+ TCP connections trought  HTTP proxies? Short answer: YES! Long answer: YES,
+ but at the expense of decreased flexibility. Maybe it isn't useful for you
+ (I hope that's not your case), or its too difficult for you newbie.<b> desproxy</b>
+   just stands between your proxy and your favourite TCP application, waiting
+ for a connection to make a TCP tunnel trought the HTTP proxy. Let's see
+one  example<br>
+                 </div>
+               
+      <h2 align="justify">Real life example</h2>
+                               
+      <div align="justify">                     
+      <div align="justify">       </div>
+                       
+      <div align="justify">Imagine you're inside a corporation, with a HTTP/1.1 
+ compliant proxy (<b>proxy.corporation.com:8080</b>) that is the only way 
+to get out there... But, hey! you want to chat using your favourite irc server 
+ (<b>irc.foo.bar:6667</b> isn't that?) so you launch "desproxy" this way:<br>
+         <tt><br>
+      </tt>
+      <div align="center"><tt>      desproxy irc.foo.bar 6667 proxy.corporation.com
+8080 6667</tt><br>
+      </div>
+      <tt><br>
+                       </tt></div>
+   Now, <b>desproxy</b> is listening on your local port <b>6667</b>, waiting 
+ for a connection (from your irc client). So you launch xchat, zircon... and
+ type<br>
+         <br>
+      <div align="center"><tt>   	/server 127.0.0.1 6667<br>
+      </tt></div>
+         <br>
+   xchat now tries to connect with your local port <b>6667</b>, <b>desproxy</b>
+    "hears the bell" and after accepting the incoming connection, makes a 
+connection  to the irc server (<b>irc.foo.bar 6667</b>) trough the HTTP proxy 
+(<b>proxy.corporation.com  8080</b>). When it gets the connection with the 
+irc server, <b>desproxy</b>   hooks the two sockets together, so xchat gets 
+the wellcome message from  the irc server as if it were connected to /server 
+      <b>irc.foo.bar 6667</b>  .<br>
+         <br>
+          </div>
+                       
+      <h2>Usage</h2>
+                       
+      <div align="justify">
+      <div align="center">                            <tt>Usage: desproxy
+remote_host remote_port proxy_host proxy_port local_port</tt><br>
+      <br>
+      </div>
+         <b>remote_host</b> &amp; <b>remote_port</b>: Address of the machine 
+ you want to connect to. <br>
+         <b>proxy_host</b> &amp; <b>proxy_port</b>  : Address of the HTTP 
+proxy.<br>
+         <b>local_port</b> : The one in which <b>desproxy</b> will listen 
+waiting  for connections.<br>
+         <br>
+          </div>
+                       
+      <h2>Programs reported to work using "desproxy"</h2>
+                       
+      <div align="justify">                            
+      <ul>
+           <li>telnet (OK)<br>
+           </li>
+           <li>ftp (not transfers, just basic commands)<br>
+           </li>
+           <li>ncftp (untested, should work in passive mode)<br>
+           </li>
+           <li>ssh &amp; scp (OK)<br>
+           </li>
+           <li>popclient &amp; fetchmail (OK)<br>
+           </li>
+           <li>sendmail (OK)<br>
+           </li>
+           <li>xchat, zircon, mIRC for windows (only basic behaviour, no
+DCC)<br>
+             <br>
+           </li>
+                       
+      </ul>
+          </div>
+                       
+      <h2>Programs that WILL NOT work using "desproxy"</h2>
+                       
+      <div align="justify">       Those that accept (or request) connections 
+ to start from the other side of the proxy (remote to local), like classic 
+ ftp (not passive).<br>
+         <br>
+                       
+      <h2>desproxy-inetd</h2>
+         <b>desproxy-inetd</b> is just a flavor of desproxy that doesn't
+bind  to a local port but reads directly from standard input (and doensn't
+display  anything beside the raw incoming "tunnelized" connection.      
+              <br>
+      <br>
+      <div align="center"><tt>Usage: desproxy-inetd remote_host remote_port
+proxy_host proxy_port</tt><br>
+      <br>
+      </div>
+   NOTE the lack of local_host. <b>desproxy-inetd</b> is designed to work 
+like  any other inetd daemon. Here is my /etc/inetd.conf line for fetchmail: 
+      <br>
+        <br>
+      <div align="center"><tt>  pop3    stream tcp nowait mail /usr/bin/desproxy-inetd
+desproxy-inetd atlas.uvigo.es  110 httpproxy.uvigo.es 8080<br>
+      </tt></div>
+        <br>
+  <b>desproxy-inetd</b> works great to test if your proxy supports TCP tunneling; 
+ just launch                     <br>
+      <br>
+      <div align="center"><tt>desproxy-inetd ftp.gnu.org 21 your.proxy your_proxy_port</tt><br>
+      <br>
+      </div>
+   and wait to see the FTP prompt! does it work? great! NO?...<br>
+                       
+      <h2>desproxy-socks4server</h2>
+        <b>desproxy-socks4server</b> is a Socks version 4 server using <b>
+ desproxy</b> . That means you can manage dinamic connections trough your 
+HTTP proxy. For example you can use MSIE, MS Messenger, News readers, Irc 
+clients... every application supporting a socks server/proxy.<br>
+               
+      <h2>desproxy-socks5server</h2>
+        <b>desproxy-socks5server</b> is a Socks version 5 server, just like
+ desproxy-socks4server is a Socks version 4 server.<br>
+               
+      <h2>desproxy-dns</h2>
+        <b>desproxy-dns</b> is a dns forwarder using <b>desproxy</b>. It's
+ used in conjuction with a socks server, because many clients need dns access
+ to resolve names prior to passing them to the socks server. It supports
+UDP  &amp; TCP access, and forwards dns queries using TCP connections to
+public  DNS servers. You can use any DNS server you wish, just search the
+web for  one and give it a try!<br>
+               
+      <h2> Troubleshooting</h2>
+  A normal <b>desproxy</b> session looks like this:<br>
+         <br>
+        <tt> miguel@Kosmos3000$ desproxy 127.0.0.1 21 127.0.0.1 4480 2222<br>
+   -----------------------------------<br>
+   desproxy                      0.0.8<br>
+        <br>
+   HTTP/1.1<br>
+   (c) Miguelanxo Otero Salgueiro 2001<br>
+   -----------------------------------<br>
+        <br>
+   Listening on port 2222<br>
+        <b> Connection request from 127.0.0.1, port 1227</b><br>
+   Connecting to http proxy (127.0.0.1:4480)<br>
+   Bidirectional connection stablished<br>
+   (127.0.0.1:21) &lt;-&gt; (localhost)<br>
+   proxy -&gt; local (72) bytes<br>
+   local -&gt; proxy (13) bytes<br>
+   proxy -&gt; local (35) bytes<br>
+   local -&gt; proxy (14) bytes<br>
+   proxy -&gt; local (447) bytes<br>
+   End of connection.<br>
+        </tt>                     <br>
+               
+      <div align="justify"> Here, I connect to my local ftp server (127.0.0.1:21)
+ using my local proxy (127.0.0.1:4480). You can see were the connection from
+ another session was accepted (from 127.0.0.1 too :)), how after the connection
+ is accepted desproxy connects to the proxy and some REAL interchange of
+bytes  (a FTP login session).<br>
+        </div>
+         <br>
+   "desproxy" is quite self explanatory about errors. "desproxy-inetd" is 
+far more obscure, because the way inetd uses it (can't print error messages).<br>
+         <br>
+   Basically there are two kind of errors:              
+      <ul>
+          <li> <b>Errors reported when connecting to the proxy</b>: the http
+ page showing the error is displayed.<br>
+          </li>
+               
+      </ul>
+                       
+      <ul>
+          <li> <b>Every other error</b>:&nbsp;a short error message is displayed.<br>
+          </li>
+               
+      </ul>
+         Errors reported by proxy may be the worse... <br>
+         <br>
+               
+      <h2> Some common HTTP errors (as reported by the proxy)</h2>
+               
+      <ul>
+          <li><b>HTTP 400 Bad Request</b> -&gt; some versions of desproxy 
+(0.0.21) cause this error (FATAL)<b><br>
+            </b></li>
+          <li><b>HTTP 403 Forbidden</b> -&gt; forbidden to do that (FATAL)</li>
+          <li><b>HTTP 404 Not Found</b> -&gt; Page not found, or resource 
+not found (MINOR)<br>
+          </li>
+          <li> <b>HTTP 405 Method not Allowed</b> -&gt; can do CONNECT method
+ (FATAL)</li>
+          <li><b> HTTP 500 Internal Server Error</b> -&gt; maybe you're trying
+ to connect to a closed port (conenection refused) (MINOR)</li>
+          <li> <b>HTTP 503 Service Unavailable</b> -&gt; The proxy can't
+reach  the site (MINOR)</li>
+          <li> <b>HTTP 505 HTTP Version Not Supported</b> -&gt; CONNECT method
+ not available (FATAL)</li>
+          <li><b> HTTP 502 Bad Gateway</b> -&gt; Stands for "DNS lookup error"
+ (MINOR)</li>
+               
+      </ul>
+          (FATAL) -&gt; forget about using "desproxy", you can't surpass
+the  proxy.<br>
+   (TODO) -&gt; To do, not yet implemented.<br>
+ (MINOR) -&gt; temporary fault or maybe YOUR fault!<br>
+       
+      <h2>COPYING</h2>
+       <b>desproxy</b> is licensed using the GNU GENERAL PUBLIC LICENSE.
+      <br>
+ Please read <a href="../COPYING">COPYING</a> for more details.<br>
+       
+      <h2>                </h2>
+       </div>
+       </td>
+          <td valign="top" width="10%" align="justify"><br>
+          </td>
+        </tr>
+               
+  </tbody>    
+</table>
+     
+<div align="justify"> <br>
+    <br>
+    </div>
+   </div>
+       
+<pre></pre>
+         
+</body>
+</html>

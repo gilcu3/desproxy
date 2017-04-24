@@ -1,0 +1,13 @@
++---------------------------------+
+| desproxy installation procedure |
++---------------------------------+
+
+desproxy install is very easy (and very little documented :P)
+
+You only need a C compiler (only tested gcc) and do the following:
+
+1) ./configure
+
+2) make
+
+3) make install (maybe you have to become root)

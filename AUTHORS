@@ -1,0 +1,12 @@
+Miguelanxo Otero Salgueiro <miguelanxotero@hotmail.com>
+
+    - Main author and maintainer
+
+Rutger Nijlunsing <rutger@tux.tmfweb.nl>
+
+    - Patch for proxy authentification.
+    - Patch for variable USER_AGENT
+
+Mikhail Krivtsov <mk@pisem.net>
+
+    - Patch for desproxy-dns UDP short write

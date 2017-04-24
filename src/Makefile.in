@@ -1,0 +1,72 @@
+#
+# Makefile.in: makefile for desproxy src/ directory
+# 
+# Copyright (C) 2003 Miguelanxo Otero Salgueiro
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the tems of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+# 
+# 
+
+prefix = @prefix@
+bindir = @prefix@/bin
+localedir = @prefix@/share/locale
+
+SHELL = /bin/sh
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+CC = @CC@
+CFLAGS = @CFLAGS@ -Wall
+DEFS = @DEFS@ -DLOCALEDIR=\"$(localedir)\"
+LIBS = @LIBS@
+
+objects = util.o desproxy.o desproxy-inetd.o desproxy-socksserver.o \
+          desproxy-dns.o socket2socket.o
+
+bins = 	desproxy desproxy-inetd desproxy-socksserver \
+	desproxy-dns socket2socket
+
+all: $(bins)
+
+desproxy: desproxy.o util.o
+	$(CC) $(CFLAGS) $(LIBS) util.o desproxy.o -o desproxy
+
+desproxy-inetd: desproxy-inetd.o util.o
+	$(CC) $(CFLAGS) $(LIBS) util.o desproxy-inetd.o -o desproxy-inetd
+
+desproxy-socksserver: desproxy-socksserver.o util.o
+	$(CC) $(CFLAGS) $(LIBS) util.o desproxy-socksserver.o -o desproxy-socksserver
+
+desproxy-dns: desproxy-dns.o util.o
+	$(CC) $(CFLAGS) $(LIBS) util.o desproxy-dns.o -o desproxy-dns
+
+socket2socket: socket2socket.o util.o
+	$(CC) $(CFLAGS) $(LIBS) util.o socket2socket.o -o socket2socket
+
+desproxy.o: desproxy.c desproxy.h
+	$(CC) $(CFLAGS) $(DEFS) -c desproxy.c
+
+desproxy-inetd.o: desproxy-inetd.c desproxy.h
+	$(CC) $(CFLAGS) $(DEFS) -c desproxy-inetd.c
+
+desproxy-socksserver.o: desproxy-socksserver.c desproxy.h
+	$(CC) $(CFLAGS) $(DEFS) -c desproxy-socksserver.c
+
+desproxy-dns.o: desproxy-dns.c desproxy.h
+	$(CC) $(CFLAGS) $(DEFS)	-c desproxy-dns.c
+
+socket2socket.o: socket2socket.c desproxy.h
+	$(CC) $(CFLAGS) $(DEFS)	-c socket2socket.c
+
+	
+util.o:	util.c desproxy.h
+	$(CC) $(CFLAGS) $(DEFS) -c util.c
+
+clean:
+	rm -rf $(objects) $(bins) desproxy.conf
+
+install:
+	install
+
+dist-clean:
+	rm -rf $(objects) $(bins) Makefile

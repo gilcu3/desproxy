@@ -1,0 +1,51 @@
+#!/bin/sh
+#
+# desproxy install script 
+#
+# (c) 2004 Miguelanxo Otero Salgueiro
+#
+
+BINDIR=$1
+LOCALEDIR=$2
+BINS="desproxy desproxy-inetd desproxy-dns desproxy-socksserver socket2socket"
+
+echo "Using binary dir: $BINDIR"
+echo "Using locale dir: $LOCALEDIR"
+
+# Directories
+
+echo "Making directories..."
+
+mkdir -p $BINDIR
+mkdir -p $LOCALEDIR
+
+# Binaries
+
+echo "Copying binaries..."
+
+for bin in $BINS; do
+	if (cp src/$bin $BINDIR); then
+		echo "$bin installed"
+	else
+		exit 1
+	fi
+done
+
+# Locales
+
+if (test $LOCALEDIR != ""); then
+	echo ""
+	echo "*************************************"
+	echo "* This version lacks locale support *"
+	echo "*     locales won't be installed    *"
+	echo "*************************************"
+	echo ""
+fi
+
+# Installation OK
+
+echo ""
+echo "*******************"
+echo "* Installation OK *"
+echo "*******************"
+echo ""

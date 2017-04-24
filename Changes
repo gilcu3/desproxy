@@ -1,0 +1,86 @@
+0.1.0-pre3 (10/06/2004) - Patched desproxy-dns.c, the UDP short write bug
+			  should be ironed out.
+
+			- Added changes suggested by Dag Wieers
+			  <dag@wieers.com> to install script and Makefile.in
+			  
+			- Removed non-working desproxy-test.
+			
+			- Removed i18n obsolete po dir. Desproxy lacks locale
+			  support by now.
+			 
+0.1.0-pre2		- Important fixes:
+
+			  - BUFFER OVERFLOWS (formely BUFFER OVERRUN's)
+			    doesn't take desproxy down.
+			  - desproxy-socksserver joins the two previous
+			    socks servers (versions 4 and 5) and 
+			    incorporates some bug fixes.
+			  - all the applications terminate only after error
+			    or pressing <Control+C>, because waiting for
+			    ENTER as before prevented from running
+			    in non-terminals (background).
+			  - The source code compiles without modification
+			    in:
+			    
+			      - Linux (tested debian 2.2 and 3.0)
+			      - MacOS X (tested MacOS X 10.2 SERVER Edition)
+			      - SunOS (tested SunOS 5.8)
+
+			- Removed i18n obsolete messages in po/ 
+			  (make install will fail when trying to install
+			  mo files)
+			    
+0.1.0-pre1              - Changelog lost.
+
+0.0.22	(01/23/2002)	- Just renamed 0.0.22a3 and released 0.0.22.
+
+0.0.22a3 (01/19/2002)	- Alpha version again. This time HTTP 400 bug
+			  (lacking HOST header bug) should be fixed.
+			  Added User-Agent header.
+
+0.0.22a2 (01/14/2002)	- Alpha version, release2. Only released to people
+			  who requested, tries to work using MS & IBM proxies
+			  (strict HTTP/1.1 headers, including HOST).
+			  Documentation goes html.
+
+0.0.21 (01/08/2002)     - Fixed that silly bug that make socks5server stop
+                          working...
+
+			- Added desproxy-socks4server, a socks v4 server,
+			  useful if you have clients that don't support the
+			  later socks 5 version (i.e. MS Internet Explorer &
+			  friends... :D)
+
+0.0.20 (12/17/2001)     - Another unstable release. Just added windows port and
+			  fix write() bug.
+
+0.0.19 (11/21/2001)	- THIS IS AN UNSTABLE RELEASE!!
+			  This release is out to free me from answer many mails
+			  requesting desproxy-socks5server to be released. So
+			  this is out!
+			  NEWS from 0.0.10:
+			  
+			  - Added desproxy-dns, a dns forwarder
+			  - Added desproxy-socks5server, a socks5server
+			    using desproxy, and able to use HTTP proxies as
+			    parent proxies.
+			  - Added socket2socket, a tiny application to connect
+			    2 sockets (useful? -> yes, for me).
+
+			  Many code cleaned (but some code dirtier :P than
+			  0.0.10 release).
+
+0.0.10 (10/11/2001)	- Now desproxy supports multiple connections
+			  (leaving request_socket open for new connections)
+			  It can be now used to connect to web sites using
+			  multiple client connections. Thanks to Kandy for
+			  the suggestion.
+
+0.0.9 (07/10/2001)	- CHANGES.log -> NEWS
+			- new code included :
+			   - gettext i18n
+			   - configure & install scripts
+
+0.0.8 (07/07/2001) 	- First CHANGES.log
+			- Started source migration from galician to english

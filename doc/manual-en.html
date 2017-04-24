@@ -1,0 +1,449 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+ <head>
+  <title>desproxy Manual</title>
+ </head>
+ <body>
+  <table><tbody><tr><td><br></td><td width="80%"><div align="justify">
+
+   NOTE: The most recent version of this document can be obtained
+   <A HREF="http://desproxy.sourceforge.net/manual-en.html">here</A>.
+   <HR>
+   
+   <h1>Introduction: What is desproxy for?</h1>
+   
+   Desproxy is a TCP tunnel for HTTP proxies. 
+   
+   <p>HTTP proxies are network servers that are used to give HTTP (web) access
+   to computers that are not connected to the Internet. This is a typical 
+   scenario in corporate networks and recently in home networks too. HTTP
+   proxies connect to the Internet either directly or via a 
+   <i>parent proxy</i> (which in fact connects to the Internet directly or
+   via another parent proxy, and so on...)
+ 
+   <p>HTTP clients (web browsers) use HTTP proxies to request web pages; the
+   HTTP server just forwards those request to the destination server. All the
+   negotiation is done via the HTTP protocol, which is designed just to carry
+   HTTP requests and no <i>generic</i> (TCP/IP) traffic. <b>That is why you 
+   can't (normally) use Internet applications beside your web server if you
+   are behind a HTTP proxy</b>.
+   
+   <p>That is what desproxy is good for. Desproxy is a TCP
+   tunnel, which means desproxy can forward TCP/IP traffic via a 
+   HTTP proxy. Desproxy uses a HTTP/1.1 method (CONNECT) to 
+   establish TCP/IP connections on demand. CONNECT is used for 
+   SSL connections when accessing to secure sites, so if you can access
+   sites that support SSL (www.hotmail.com for example) you can use desproxy.
+   
+   <p>Note I recall TCP/IP traffic.
+   
+   <p>Not all IP (Internet) traffic is just TCP/IP. In fact there are two more
+   protocols widely used in the Internet not supported by desproxy: UDP
+   and ICMP:
+   <ul>
+    
+    <li><p>ICMP is used to manage large IP networks. The only application
+    using ICMP you may miss is <b>ping</b>.</li>
+    
+    <li><p>UDP is an unreliable connection-less fast transport protocol, mostly
+    used in network games and other applications that need low latency network
+    traffic. Notably <b>DNS</b> uses UDP packets for fast delivery.</li> 
+   </ul>
+   
+   <h1>Will desproxy work with my HTTP proxy?</h1>
+   
+   Short answer: just give it a try<br>
+   
+   <p>Long answer: desproxy should work with every HTTP proxy, with the 
+   following exceptions:
+   <ul>
+    <li><p><b>MS Proxies with NTLM authentication</b>. NTLM is a proprietary
+    authentication method from Microsoft, not a standard authentication
+    method. Maybe in the future desproxy will support NTLM authentication, but
+    currently it doesn't.</li>
+    
+    <li><p><b>HTTP/1.0 Proxies</b>. Desproxy needs the CONNECT method, which
+    is only available from HTTP/1.1 protocol version. It's very unlikely your
+    proxy doesn't accept HTTP/1.1 requests.</li>
+   
+    <li><p><b>HTTP/1.1 Proxies without the CONNECT method</b>. Maybe your
+    network administrator deactivated CONNECT support in the proxy, or maybe
+    CONNECT is restricted to the HTTPS port (443).</li>
+   </ul>
+   
+   <h1>Assumptions</h1>
+   
+   Let's assume the following:
+   <ul>
+    
+    <li><p>your HTTP proxy host name is "proxy" and its address is
+    "192.0.0.1"</li>
+    
+    <li><p>your HTTP proxy port is "8080"</li>
+    
+    <li><p>your HTTP proxy <b>doesn't need authentication</b>. It case
+    you need HTTP authentication, please read <a href="#AUTH">this</a>.
+   
+    <li><p>your <b>system console</b> will be:
+     <ul>
+      <li><p><b>MS/DOS box</b> if you are running Windows 95, Windows 98,
+      or Windows ME</li>
+      <li><p><b>Windows NT command shell</b> if you are running Windows NT,
+      Windows 2000 or Windows XP</li>
+      <li><p>A <b>terminal</b> (xterm, the console or a virtual terminal) if
+      you are running Linux, *BSD or other UN*X</li>
+     </ul>
+    </li> 
+   </ul>
+   
+   <h1>About connections</h1>
+
+   Imagine you need a network application that uses only one TCP/IP
+   connection with just one server. That's the case of <b>IRC</b> in which you
+   connect to an IRC server or <b>ssh</b> where you tipically connect just to
+   one UNIX computer at a time. That's what I called a "static connection".
+
+   <p>Of course that's not the case of a <b>web browser</b> or a <b>file
+   sharing program</b>, both of them doing several connections at a time
+   to different computers. That's what I call "dynamic connections".
+   
+   <h1>Static connections examples</h1>
+   
+   How to use desproxy to...
+   
+   <h2>...connect to IRC</h2>
+   
+   Suppose you want to connect to IRC using  <b>irc.undernet.org</b>
+   port <b>6667</b> as your IRC server. First you have to start a system
+   console (see <b>Assumptions</b> above for details) and type
+   
+   <p><pre><code>desproxy irc.undernet.org 6667 proxy 8080 1080</code></pre>
+   
+   <p>That should start desproxy, giving you the copyright notice along with
+   some information. The following is a screen capture from desproxy 0.0.23
+
+   <p><pre><code>-----------------------------------
+desproxy                     0.0.23
+
+(c) Miguelanxo Otero Salgueiro 2001
+
+This release brought to you patched
+by Rutger Nijlunsig.
+
+See RutgerWork.txt in documentation
+for details about new features.
+
+Great work guy!
+-----------------------------------
+
+TCP port 1080 Binded & Listening
+Press ENTER to Quit</code></pre>
+
+   <p>Desproxy reports it is listening in local port 1080 ready for a
+   connection.
+   
+   <p>Open your favourite IRC client (install it first ;D) and connect to 
+   127.0.0.1 port 1080 as your irc server (127.0.0.1 is a virtual IP, 
+   always referencing to your local machine). Then, your IRC client should
+   connect to desproxy. It looks like
+
+   <p><pre><code>Connection request from 127.0.0.1, port 1220
+Connecting to http proxy (proxy:8080)
+Bidirectional connection established</pre></code>
+
+   <p>Then you should be able to use your IRC client as if you were directly
+   connected to irc.undernet.org.
+   
+   <h2>...log in a computer using ssh</h2>
+   
+   Suppose you have a shell account in a computer that supports secure
+   connections via ssh. Let's assume it's called
+   <b>shell.corporate.com</b>. SSH uses port number <b>22</b> by default. So
+   start a new system console and type:
+   <p><pre><code>desproxy shell.corporate.com 22 proxy 8080 1080</pre></code>
+   
+   <p>Then, tell your ssh client to connect to localhost (127.0.0.1) port 1080
+   and you should get a ssh password prompt!
+   
+   <h2>...use other static clients</h2>
+   
+   Let's assume you want to use network application X, which doesn't support
+   HTTP proxies but use one TCP/IP connection (like IRC and SSH). To make
+   X work with desproxy, you just have to do the following:
+   <ul>
+    
+    <li><p>Search for the default port of that application:
+    <ul>
+     
+     <li><p>ftp: 21</li>
+
+     <li><p>ssh: 22</li>
+     
+     <li><p>telnet: 23</li>
+     
+     <li><p>smtp: 25</li>
+     
+     <li><p>...</li>
+    </ul>
+    </li>
+    
+    <li><p>Search for the default server of that application (if there is one)
+    <ul>
+     
+     <li><p>AIM: toc.oscar.aol.com (port 21)</li>
+     
+     <li><p>ICQ: icq.mirabilis.com (port 4000)</li>
+     
+     <li><p>Yahoo messenger: cs.yahoo.com (port 5050)</li>
+     
+     <li><P>MSN Messenger: messenger.hotmail.com (port 1863)</li>
+     
+     <li><p>...</li>
+    </ul>
+    </li>
+    
+    <li><p>Start desproxy, passing that info as command line parameters. The
+    format is
+    <p><code><pre>desproxy remote_host remote_port proxy_host proxy_port local_port</pre></code>
+    
+    <p>Just give a local_port of your desire, but always over 1023, cause
+    lower ports may need administrator privileges.
+    </li>
+    </ul>
+    </li>
+   </ul>
+   
+   <h1>Using desproxy with dynamic connections</h1>
+   
+   You can see that for every application that needs to be
+   un-proxyzed you have to start a desproxy program. That is OK if you
+   are using irc, ssh or other application that always connects to the
+   same server. But if you need to dynamically establish TCP connections
+   it's impossible to follow that path.
+   
+   <p>That's why I wrote desproxy-socks5server. Desproxy-socks5server is
+   just a desproxy implementation of a Socks 5 Server. A Socks 5 Server is
+   like a "TCP proxy": you just request a TCP connection and the Socks 5
+   Server does the work for you.
+   
+   <p>Of course, client applications need to have support for Socks 5 Server.
+   If your application lacks Socks 5 support, you can use
+   desproxy-socks4server instead, given it has Socks 4 support.
+   
+   <p><b>If the application lacks any Socks support, and needs dynamic
+   connections, you can't do anything: it won't work behind the HTTP
+   proxy</b>.
+   
+   <p>Using desproxy-socksXserver (X being 4 or 5) is very easy: you only
+   have to start a system console and type:
+   
+   <p><code><pre>desproxy-socks4server proxy 8080 1080</pre></code>
+
+   <p>or
+
+   <p><code><pre>desproxy-socks5server proxy 8080 1080</pre></code>
+   
+   <p>Here I'm assuming "proxy" and "8080" to be your proxy name and port.
+   
+   <p>That should start the Socks server. Then you have to tell your
+   application to use Socks server "127.0.0.1" port "1080". Just see in the
+   proxy configuration and look for "Socks Server" adjustments.
+   
+   <p>That is not all, unfortunately. Beside having your Socks server up you
+   need <b>DNS</b> access. Of course if you don't have DNS access, you just
+   have to use desproxy-dns.
+   So let's see the two scenarios
+   
+   <h1>DNS for dynamic connections</h1>
+   
+   <h2>Direct DNS access</h2>
+   
+   If you have direct DNS access then you don't need to do anything else.
+   You know you have direct DNS access if you can resolve host names to
+   IP addresses. To test DNS just start a system console and type
+   
+   <p><code><pre>ping www.hotmail.com</pre></code>
+   
+   <p>Of course, you can't ping anything outside the proxy, but ping should
+   display the IP address of hotmail, if it can resolve it. Ping should
+   display something like
+   
+   <p><code><pre>Pinging www.hotmail.com [64.4.43.7] with 32 bytes of data</pre></code>
+   
+   <p>if you are using MS Windows, or
+   
+   <p><code><pre>PING www.hotmail.com (64.4.43.7): 56 data bytes</pre></code>
+
+   <p>if you are running Linux, *BSD or UN*X.
+
+   <p>Ping should also complain about losing all the packets. OK, that's as it
+   should be. If ping displays "unknown host www.hotmail.com" try a different
+   one, like "www.yahoo.com" or "www.sun.com". It that three displayed "unknown
+   host" then you don't have DNS access.
+   
+   <h2>No DNS access</h2>
+   
+   If you don't have DNS access you have to do two things:
+   <ul>
+   
+   <li><p>Search for a public accessible DNS server IP address
+    
+    <p>Let's assume you find one (195.196.180.14).
+   </li>
+   
+   <li><p>Start desproxy-dns
+    <p>Open another system console and type
+    
+    <p><code><pre>desproxy-dns 195.196.180.14 proxy 8080</pre></code>
+   </li>
+   </ul>
+   <p>After that you will have a DNS server running in your computer.
+   
+   <p><b>NOTE</b>: as desproxy-dns listens in port 53 (which is less than 1024)
+   you may need administrator privileges to exec desproxy-dns (in fact if you
+   are running UN*X, you actually have to run desproxy-dns as <b>root</b>).
+   
+   <p>OK, so you have a dns server accessible now. But your computer doesn't
+   know anything about that. You must configure your network accordingly
+   (again, need to be root in UN*X).
+   
+   <p>In <b>Windows</b> just go to Control Panel-&gt
+   Network-&gt TCP/IP -&gt Network Adapter-&gt Properties-&gt DNS
+   Configuration. Select "Activate DNS" and add "127.0.0.1" as a DNS server.
+   Then restart. Test the ping again. Works? OK!
+   
+   <p>In <b>UN*X</b> just edit /etc/resolv.conf and add the line
+   "nameserver 127.0.0.1". You don't have to restart anything. Just test
+   ping and see if it works.
+   
+   <h1>Dynamic connections examples</h1>
+   
+   How to use desproxy to...
+
+   <h2>...instant message anyone</h2>
+
+   Just remember to get a DNS server (directly or using desproxy-dns)
+   see above. Then, start a socks4server
+   
+   <p><code><pre>desproxy-socks4server proxy 8080 1080</pre></code>
+   
+   <p>You could start desproxy-socks5server, but some applications refuse
+   to work with Socks 5 (MS Internet Explorer for example) and the
+   Socks 4 Version is faster.
+
+   <p>Remember to leave blank the username and password fields in the client
+   Socks configuration: desproxy does all the work, in case your HTTP proxy
+   needs authentication. 
+   
+   <p>Get your favourite Instant Messaging program and configure
+   it to use Socks 5 Server "127.0.0.1" port "1080". Then, log in and have fun!
+
+   <h2>...share files</h2>
+
+   Again, the same applies for DNS. Remember to start a desproxy-socks4server,
+   configure your program and go!
+
+   <a name="AUTH"></a><h1>About HTTP Authentication</h1>
+
+   Some HTTP proxies need for security reasons a method of checking client's
+   identity. That's called HTTP authentication (or HTTP authorization).
+
+   <p>Despoxy now supports Basic HTTP authentication. If your proxy needs other
+   kind of authentication (either Digest or NTLM) desproxy won't work.
+
+   <p>For desproxy to work with a HTTP proxy that needs authentication, you
+   have to tell desproxy which username and password to use. Desproxy reads
+   the environment variable PROXY_USER to get that info.
+
+   <p>Suppose your proxy username is "mayka" and your proxy password is
+   "007sgotLTK". Then, before using any of the desproxy programs you
+   should type:
+
+   <p><pre><code>set PROXY_USER=mayka:007sgotLTK</code></pre>
+
+   <p>in your system console.
+   
+   <p>Beware passwords can include some characters that should be
+   escaped from the system console. For example, if your password is
+   "moon!=sun", and you are running Linux, you should type
+
+   <p><pre><code>export PROXY_USER=yourusername:moon\!\=sun</code></pre>
+
+   <p>Note characters "!" and "=" are escaped using the backslash "\".
+   If you are running MS Windows, as long as I know, you don't have to
+   escape any valid password character.
+
+   <h1>Troubleshooting</h1>
+
+   A normal <b>desproxy</b> session looks like this:
+   
+   <p><pre><code>miguel@Kosmos3000$ desproxy 127.0.0.1 21 127.0.0.1 4480 2222
+
+-----------------------------------
+desproxy                      0.0.8
+
+HTTP/1.1
+(c) Miguelanxo Otero Salgueiro 2001
+-----------------------------------
+
+Listening on port 2222
+Connection request from 127.0.0.1, port 1227
+Connecting to http proxy (127.0.0.1:4480)
+Bidirectional connection stablished
+(127.0.0.1:21) &lt;-&gt; (localhost)
+End of connection.</code></pre>
+
+   <p>Here, I connected to my local ftp server (127.0.0.1:21)
+   using my local proxy (127.0.0.1:4480). You can see how, after the
+   connection is accepted, desproxy connected to the proxy, interchanged
+   some bytes  (a FTP session) and terminates the connection.
+   
+   <p>Desproxy is quite self explanatory about errors. Desproxy-inetd is
+   far more obscure, because the way inetd uses it (can't print error
+   messages) to the console.
+   
+   <p>Basically there are two kind of errors:              
+   <ul>
+    
+    <li><p><b>Errors reported when connecting to the proxy</b>: the http
+ page showing the error is displayed.</li>
+               
+    <li><p><b>Every other error</b>: a short error message is displayed.</li>
+   </ul>
+   Errors reported by proxy may be the worse... <br>
+   
+   <h2>Some common HTTP errors (as reported by the proxy)</h2>
+               
+   <ul>
+    
+    <li><p><b>HTTP 400 Bad Request</b> - Some versions of desproxy
+    (0.0.21) cause this error (FATAL)</li>
+    
+    <li><p><b>HTTP 403 Forbidden</b> - Forbidden to do that (FATAL)</li>
+    
+    <li><p><b>HTTP 404 Not Found</b> - Page not found, or resource 
+    not found (MINOR)</li>
+    
+    <li><p><b>HTTP 405 Method not Allowed</b> - Can't do CONNECT method
+    (FATAL)</li>
+    
+    <li><p><b>HTTP 500 Internal Server Error</b> - Maybe you're trying
+     to connect to a remote closed port (remote site reported connection
+     refused) (MINOR)</li>
+    
+    <li><p><b>HTTP 503 Service Unavailable</b> -&gt; The proxy can't
+    reach the site (MINOR)</li>
+    
+    <li><p><b>HTTP 505 HTTP Version Not Supported</b> - CONNECT method
+    not available (FATAL)</li>
+    
+    <li><p><b>HTTP 502 Bad Gateway</b> - Stands for "DNS lookup error"
+    (MINOR)</li>
+   </ul>
+   <p>(FATAL) - Forget about using "desproxy", you can't surpass the proxy.<br>
+   (TODO) - To do, not yet implemented.<br>
+   (MINOR) - Temporary fault or maybe YOUR fault!.<br>
+   </div>
+  </td><td><br></td></tr></tbody></table>
+ </body>
+</html>

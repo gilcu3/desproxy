@@ -1,0 +1,26 @@
+# Process this file with autoconf to produce a configure script.
+AC_INIT
+AC_CONFIG_SRCDIR([src/desproxy.c])
+AC_CONFIG_HEADER([config.h])
+
+# Checks for programs.
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_MAKE_SET
+
+# Checks for libraries.
+
+# Checks for header files.
+AC_CHECK_HEADERS([arpa/inet.h errno.h libintl.h locale.h netdb.h netinet/in.h stdlib.h string.h sys/socket.h sys/time.h unistd.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_HEADER_TIME
+
+# Checks for library functions.
+AC_FUNC_MEMCMP
+AC_HEADER_STDC
+AC_CHECK_FUNCS([gethostbyname inet_ntoa memset select setlocale socket])
+
+AC_CONFIG_FILES([Makefile
+                 src/Makefile])
+AC_OUTPUT
