@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <locale.h>
 #include "util.h"
+#include "md5.h"
 
 #ifdef HAVE_CONFIG_H
 #include "../config.h"

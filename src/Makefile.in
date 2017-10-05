@@ -18,7 +18,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 CC = @CC@
 CFLAGS = @CFLAGS@ -Wall
 DEFS = @DEFS@ -DLOCALEDIR=\"$(localedir)\"
-LIBS = @LIBS@
+LIBS = @LIBS@ -levent
 
 objects = util.o desproxy.o desproxy-inetd.o desproxy-socksserver.o \
           desproxy-dns.o socket2socket.o
@@ -28,21 +28,24 @@ bins = 	desproxy desproxy-inetd desproxy-socksserver \
 
 all: $(bins)
 
-desproxy: desproxy.o util.o
-	$(CC) $(CFLAGS) $(LIBS) util.o desproxy.o -o desproxy
+desproxy: desproxy.o util.o md5.o
+	$(CC) $(CFLAGS) $(LIBS) util.o desproxy.o md5.o -o desproxy
 
-desproxy-inetd: desproxy-inetd.o util.o
-	$(CC) $(CFLAGS) $(LIBS) util.o desproxy-inetd.o -o desproxy-inetd
+desproxy-inetd: desproxy-inetd.o util.o md5.o
+	$(CC) $(CFLAGS) $(LIBS) util.o desproxy-inetd.o md5.o -o desproxy-inetd
 
-desproxy-socksserver: desproxy-socksserver.o util.o
-	$(CC) $(CFLAGS) $(LIBS) util.o desproxy-socksserver.o -o desproxy-socksserver
+desproxy-socksserver: desproxy-socksserver.o util.o md5.o
+	$(CC) $(CFLAGS) $(LIBS) util.o desproxy-socksserver.o md5.o -o desproxy-socksserver
 
-desproxy-dns: desproxy-dns.o util.o
-	$(CC) $(CFLAGS) $(LIBS) util.o desproxy-dns.o -o desproxy-dns
+desproxy-dns: desproxy-dns.o util.o md5.o
+	$(CC) $(CFLAGS) $(LIBS) util.o desproxy-dns.o md5.o -o desproxy-dns
 
-socket2socket: socket2socket.o util.o
-	$(CC) $(CFLAGS) $(LIBS) util.o socket2socket.o -o socket2socket
+socket2socket: socket2socket.o util.o md5.o
+	$(CC) $(CFLAGS) $(LIBS) util.o socket2socket.o md5.o -o socket2socket
 
+md5.o: md5.c md5.h
+	$(CC) $(CFLAGS) $(DEFS) -c md5.c
+	
 desproxy.o: desproxy.c desproxy.h
 	$(CC) $(CFLAGS) $(DEFS) -c desproxy.c
 
