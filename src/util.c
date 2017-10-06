@@ -10,6 +10,7 @@
  */
 
 #include <stdarg.h>
+#include <event.h>  
 #include "desproxy.h"
 
 /*
@@ -321,6 +322,182 @@ wait_for_2crlf (int fd)
   return (0);
 }
 
+
+void init_http_header(char* string, char* remote_host, char *remote_port){
+  char User_Agent[256];
+  strcpy (string, "CONNECT ");
+  strcat (string, remote_host);
+  strcat (string, ":");
+  strcat (string, remote_port);
+  strcat (string, " HTTP/1.1\r\nHost: ");
+  strcat (string, remote_host);
+  strcat (string, ":");
+  strcat (string, remote_port);
+  strcat (string, "\r\nUser-Agent: ");
+  if (getenv ("USER_AGENT") != NULL)
+    {
+       strncpy (User_Agent, getenv ("USER_AGENT"), 255);
+    }
+  else
+    {
+       strcpy (User_Agent, "Mozilla/4.0 (compatible; MSIE 5.5; Windows 98)");
+    }
+  strcat (string, User_Agent);
+  
+}
+
+
+
+#define MD5_HASHLEN (16)
+static void dump_hash(char *buf, const unsigned char *hash) 
+{
+	int i;
+
+	for (i = 0; i < MD5_HASHLEN; i++) {
+		buf += sprintf(buf, "%02x", hash[i]);
+	}
+
+	*buf = 0;
+}
+
+/*
+	Taken from darkk/redsocks
+*/
+uint32_t red_randui32()
+{
+	uint32_t ret;
+	evutil_secure_rng_get_bytes(&ret, sizeof(ret));
+	return ret;
+}
+
+/*
+	Based on the corresponding function on darkk/redsocks
+*/
+
+char* digest_authentication_encode(char* user, char* realm, char* passwd, char * method, char * path, char* nc, char* nonce, char* cnonce, char* qop){
+
+	
+	/* calculate the digest value */
+	md5_state_t ctx;
+	md5_byte_t hash[MD5_HASHLEN];
+	char a1buf[MD5_HASHLEN * 2 + 1], a2buf[MD5_HASHLEN * 2 + 1];
+	char response[MD5_HASHLEN * 2 + 1];
+	/* A1 = username-value ":" realm-value ":" passwd */
+	md5_init(&ctx);
+	md5_append(&ctx, (md5_byte_t*)user, strlen(user));
+	md5_append(&ctx, (md5_byte_t*)":", 1);
+	md5_append(&ctx, (md5_byte_t*)realm, strlen(realm));
+	md5_append(&ctx, (md5_byte_t*)":", 1);
+	md5_append(&ctx, (md5_byte_t*)passwd, strlen(passwd));
+	md5_finish(&ctx, hash);
+	dump_hash(a1buf, hash);
+
+	/* A2 = Method ":" digest-uri-value */
+	
+	md5_init(&ctx);
+	md5_append(&ctx, (md5_byte_t*)method, strlen(method));
+	md5_append(&ctx, (md5_byte_t*)":", 1);
+	md5_append(&ctx, (md5_byte_t*)path, strlen(path));
+	md5_finish(&ctx, hash);
+	dump_hash(a2buf, hash);
+	
+	
+	
+	
+	/* qop set: request-digest = H(A1) ":" nonce-value ":" nc-value ":" cnonce-value ":" qop-value ":" H(A2) */
+	/* not set: request-digest = H(A1) ":" nonce-value ":" H(A2) */
+	md5_init(&ctx);
+	md5_append(&ctx, (md5_byte_t*)a1buf, strlen(a1buf));
+	md5_append(&ctx, (md5_byte_t*)":", 1);
+	md5_append(&ctx, (md5_byte_t*)nonce, strlen(nonce));
+	md5_append(&ctx, (md5_byte_t*)":", 1);
+	if (qop) {
+		md5_append(&ctx, (md5_byte_t*)nc, strlen(nc));
+		md5_append(&ctx, (md5_byte_t*)":", 1);
+		md5_append(&ctx, (md5_byte_t*)cnonce, strlen(cnonce));
+		md5_append(&ctx, (md5_byte_t*)":", 1);
+		md5_append(&ctx, (md5_byte_t*)qop, strlen(qop));
+		md5_append(&ctx, (md5_byte_t*)":", 1);
+	}
+	md5_append(&ctx, (md5_byte_t*)a2buf, strlen(a2buf));
+	md5_finish(&ctx, hash);
+	dump_hash(response, hash);
+
+	/* prepare the final string */
+	int len = 256;
+	len += strlen(user);
+	len += strlen(realm);
+	len += strlen(nonce);
+	len += strlen(path);
+	len += strlen(response);
+
+	if (qop) {
+		len += strlen(qop);
+		len += strlen(nc);
+		len += strlen(cnonce);
+	}
+
+
+
+	char *res = (char*)malloc(len);
+	sprintf(res, "username=\"%s\", realm=\"%s\", nonce=\"%s\", uri=\"%s\", response=\"%s\", qop=%s, nc=%s, cnonce=\"%s\"",
+			user, realm, nonce, path, response, qop, nc, cnonce);
+	
+
+
+
+	
+	return res;
+}
+#define BUFSIZE 4096
+typedef struct proxyauth{
+	char realm[BUFSIZE];
+	char nonce[33];
+	char qop[BUFSIZE];
+	int stale;
+}proxyauth;
+
+
+proxyauth* process_line(char* line){
+	
+	proxyauth* pa = (proxyauth *)malloc(sizeof(proxyauth));
+	// for now only looking for nonce and realm
+	char* where = strstr(line, "nonce");
+	if(where != NULL)strncpy(pa->nonce, where + 7, 32);
+	where = strstr(line, "realm");
+	if(where != NULL)sscanf(where + 7, "%[^\"]", pa->realm);
+	return pa;
+}
+
+
+proxyauth * get_param(char * buffer){
+	char line[BUFSIZE] = "";
+	int cur = 0;
+	int blen = strlen(buffer);
+	const char pauth[20] = "Proxy-Authenticate:";
+	const char conclose[18] = "Connection: close";
+	while(cur < blen){
+		sscanf(buffer + cur, " %[^\n]", line);
+		
+		cur += strlen(line) + 1;
+		
+		if(strncmp(line, pauth, strlen(pauth)) == 0){
+			return process_line(line);
+		}
+		if(strncmp(line, conclose, strlen(conclose)) == 0)break;
+	}
+	return NULL;
+	
+}
+
+
+
+
+
+
+
+
+
 /*
  * Function : int connect_host_to_proxy(int connection, char *remote_host
  *          : char *remote_port)
@@ -385,39 +562,17 @@ connect_host_to_proxy (int connection, char *remote_host, char *remote_port)
     }
   debug_printf ("connect>\n");
   status = PROXY_OK;
-  strcpy (string, "CONNECT ");
-  strcat (string, remote_host);
-  strcat (string, ":");
-  strcat (string, remote_port);
-  strcat (string, " HTTP/1.1\r\nHost: ");
-  strcat (string, remote_host);
-  strcat (string, ":");
-  strcat (string, remote_port);
-  strcat (string, "\r\nUser-Agent: ");
-  if (getenv ("USER_AGENT") != NULL)
-    {
-       strncpy (User_Agent, getenv ("USER_AGENT"), 255);
-    }
-  else
-    {
-       strcpy (User_Agent, "Mozilla/4.0 (compatible; MSIE 5.5; Windows 98)");
-    }
-  strcat (string, User_Agent);
-  if (getenv ("PROXY_USER") != NULL)
-    {
-      char proxy_authorization_base64[257];
-
-      strncpy (proxy_user, getenv ("PROXY_USER"), 255);
-      base64_encode (proxy_user, proxy_authorization_base64);
-      strcat (string, "\r\nProxy-authorization: Basic ");
-      strcat (string, proxy_authorization_base64);
-      debug_printf ("Proxy-authorization: Basic %s\n",
-		    proxy_authorization_base64);
-    }
+  init_http_header(string, remote_host, remote_port);
   strcat (string, "\r\n\r\n");
   strsend (proxy_socket[connection], string);
+  int tries = 0;
   while (status == PROXY_OK)
     {
+      tries += 1;
+      if(tries > 2){
+	perror ("failed");
+	return -4;
+      }
       if (wait_for_crlf (proxy_socket[connection]) < 0)
       {
 	      EOC (connection);
@@ -426,6 +581,116 @@ connect_host_to_proxy (int connection, char *remote_host, char *remote_port)
       parse_HTTP_return_code ();
       if (!strcmp (HTTP_return_code, "200"))
 	status = BICONNECTED;
+      else if(!strcmp (HTTP_return_code, "407")){
+	  read (proxy_socket[connection], buffer, sizeof (buffer)); // hopefully buffer is big enough to receive the http header
+	  if(strstr(buffer, "Proxy-Authenticate: Basic") != NULL){
+	    debug_printf("connect_host_to_proxy> Proxy-Authenticate: Basic\n");
+	    
+	    init_http_header(string, remote_host, remote_port);
+	    if (getenv ("PROXY_USER") != NULL)
+	    {
+	      char proxy_authorization_base64[257];
+
+	      strncpy (proxy_user, getenv ("PROXY_USER"), 255);
+	      base64_encode (proxy_user, proxy_authorization_base64);
+	      strcat (string, "\r\nProxy-authorization: Basic ");
+	      strcat (string, proxy_authorization_base64);
+	      //debug_printf ("Proxy-authorization: Basic %s\n", proxy_authorization_base64);
+	      strcat (string, "\r\n\r\n");
+	      if ((proxy_socket[connection] = socket (AF_INET, SOCK_STREAM, 0)) < 0)
+	      {
+		perror ("socket");
+		return -1;
+	      }
+	      
+	      
+	      if (connect (proxy_socket[connection],
+			 (struct sockaddr *) &proxy, sizeof proxy) < 0)
+	      {
+		perror ("connect");
+		return -3;
+	      }
+	      
+	      
+	      strsend (proxy_socket[connection], string);
+	    }
+	    else{
+	      status = PROXY_FAULT;
+	    }
+	  }
+	  
+	  else if(strstr(buffer, "Proxy-Authenticate: Digest") != NULL){
+	    
+	    debug_printf("connect_host_to_proxy> Proxy-Authenticate: Digest\n");
+	    
+	    proxyauth* pa = get_param(buffer);
+	    if(pa == NULL){
+		perror ("proxy");
+		return -1;
+	    }
+	    if(strlen(pa->nonce) != 32){
+		perror("proxy(nonce)");
+		return -1;
+	    }
+	    
+	    init_http_header(string, remote_host, remote_port);
+	    if (getenv ("PROXY_USER") != NULL)
+	    {
+	      char up[256];
+	      strncpy (up, getenv ("PROXY_USER"), 255);
+	      char user[256] = "";
+	      sscanf(up, "%[^:]", user);
+	      char passwd[256] = "";
+	      sscanf(up + strlen(user) + 1, "%s", passwd);
+	      char method[32] = "CONNECT";
+	      strcat(string, "\r\nProxy-Authorization: Digest ");
+	      
+	      
+	      /* prepare an random string for cnounce */
+	      char cnonce[17];
+	      snprintf(cnonce, sizeof(cnonce), "%08x%08x", red_randui32(), red_randui32());
+	      
+	      char nc[17];
+	      snprintf(nc, sizeof(nc), "%08x", 1);
+	      
+	      
+	      
+	      
+	      char* auth_string = digest_authentication_encode(
+			      user, pa->realm, passwd, //user, realm, pass
+			      method, "/", nc, pa->nonce, cnonce, "auth"); // method, path, nc, cnonce
+	      
+	      strcat(string, auth_string);
+	      
+	      
+	      
+	      strcat (string, "\r\n\r\n");
+	      if ((proxy_socket[connection] = socket (AF_INET, SOCK_STREAM, 0)) < 0)
+	      {
+		perror ("socket");
+		return -1;
+	      }
+	      
+	      
+	      if (connect (proxy_socket[connection],
+			 (struct sockaddr *) &proxy, sizeof proxy) < 0)
+	      {
+		perror ("connect");
+		return -3;
+	      }
+	      
+	      
+	      strsend (proxy_socket[connection], string);
+	    }
+	    else{
+	      status = PROXY_FAULT;
+	    }
+	  }
+	  else{
+	    status = PROXY_FAULT;
+	  }
+	}
+	
       else
 	status = PROXY_FAULT;
     }
@@ -434,6 +699,7 @@ connect_host_to_proxy (int connection, char *remote_host, char *remote_port)
       /*
        * if PROXY_FAULT then write HTTP response to stdout
        */
+      printf("HTTP CODE=%s\n", HTTP_return_code);
       while ((count = read (proxy_socket[connection],
 			    buffer, sizeof (buffer))) != 0)
 	write (1, buffer, count);

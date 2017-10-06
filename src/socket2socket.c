@@ -11,7 +11,6 @@
 
 #include <signal.h>
 #include "desproxy.h"
-#define MAX_CONNECTIONS 10
 #define PROGRAM_VERSION VERSION
 #define PROGRAM_NAME "socket2socket"
 

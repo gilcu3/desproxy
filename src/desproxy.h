@@ -62,10 +62,10 @@
 #define METHOD_ACCEPTED_V5 10
 #define TO_RESET 11
 
-#define MAX_CONNECTIONS 10
+#define MAX_CONNECTIONS 500
 
 #define BUFFER_SIZE 1500
-#define VERSION "0.1.0-pre3"
+#define VERSION "0.1.1"
 /*
  * Debug level, 0 = none, 1 = basic, >1 = full
  */
